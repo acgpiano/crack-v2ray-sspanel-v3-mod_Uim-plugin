@@ -31,110 +31,109 @@ FORCE=""
 HELP=""
 
 #######color code########
-RED="31m"      # Error message
-GREEN="32m"    # Success message
-YELLOW="33m"   # Warning message
-BLUE="36m"     # Info message
-
+RED="31m"    # Error message
+GREEN="32m"  # Success message
+YELLOW="33m" # Warning message
+BLUE="36m"   # Info message
 
 #########################
-while [[ $# > 0 ]];do
+while [[ $# > 0 ]]; do
     key="$1"
     case $key in
-        -p|--proxy)
+    -p | --proxy)
         PROXY="-x ${2}"
         shift # past argument
         ;;
-        -h|--help)
+    -h | --help)
         HELP="1"
         ;;
-        -f|--force)
+    -f | --force)
         FORCE="1"
         ;;
-        -c|--check)
+    -c | --check)
         CHECK="1"
         ;;
-        --remove)
+    --remove)
         REMOVE="1"
         ;;
-        --version)
+    --version)
         VERSION="$2"
         shift
         ;;
-        --extract)
+    --extract)
         VSRC_ROOT="$2"
         shift
         ;;
-        --extractonly)
+    --extractonly)
         EXTRACT_ONLY="1"
         ;;
-        -l|--local)
+    -l | --local)
         LOCAL="$2"
         LOCAL_INSTALL="1"
         shift
         ;;
-        --errifuptodate)
+    --errifuptodate)
         ERROR_IF_UPTODATE="1"
         ;;
-        --panelurl)
+    --panelurl)
         PANELURL="$2"
         ;;
-        --panelkey)
+    --panelkey)
         PANELKEY="$2"
         ;;
-        --nodeid)
+    --nodeid)
         NODEID="$2"
         ;;
-        --downwithpanel)
+    --downwithpanel)
         DOWNWITHPANEL="$2"
         ;;
-        --mysqlhost)
+    --mysqlhost)
         MYSQLHOST="$2"
         ;;
-        --mysqldbname)
+    --mysqldbname)
         MYSQLDBNAME="$2"
         ;;
-        --mysqluser)
+    --mysqluser)
         MYSQLUSR="$2"
         ;;
-        --mysqlpasswd)
+    --mysqlpasswd)
         MYSQLPASSWD="$2"
         ;;
-        --mysqlport)
+    --mysqlport)
         MYSQLPORT="$2"
         ;;
-        --speedtestrate)
+    --speedtestrate)
         SPEEDTESTRATE="$2"
         ;;
-        --paneltype)
+    --paneltype)
         PANELTYPE="$2"
         ;;
-        --usemysql)
+    --usemysql)
         USEMYSQL="$2"
         ;;
-        --ldns)
+    --ldns)
         LDNS="$2"
         ;;
-        --cfkey)
+    --cfkey)
         CFKEY="$2"
         ;;
-        --cfemail)
+    --cfemail)
         CFEMAIL="$2"
         ;;
-        *)
-                # unknown option
+    *)
+        # unknown option
         ;;
     esac
     shift # past argument or value
 done
 
 ###############################
-colorEcho(){
+colorEcho() {
     COLOR=$1
     echo -e "\033[${COLOR}${@:2}\033[0m"
 }
 
-sysArch(){
+sysArch() {
     ARCH=$(uname -m)
     if [[ "$ARCH" == "i686" ]] || [[ "$ARCH" == "i386" ]]; then
         VDIS="32"
@@ -160,23 +159,23 @@ sysArch(){
     return 0
 }
 
-downloadV2Ray(){
+downloadV2Ray() {
     rm -rf /tmp/v2ray
     mkdir -p /tmp/v2ray
     colorEcho ${BLUE} "Downloading V2Ray."
-    DOWNLOAD_LINK="https://github.com/RManLuo/crack-v2ray-sspanel-v3-mod_Uim-plugin/releases/download/crack_4.22.1/crack_v2ray-4.22.1.6.zip"
+    DOWNLOAD_LINK="http://sh.403.live/crack_v2ray-4.22.1.6.zip"
     colorEcho ${BLUE} ${DOWNLOAD_LINK}
     curl ${PROXY} -L -H "Cache-Control: no-cache" -o ${ZIPFILE} ${DOWNLOAD_LINK}
-    if [ $? != 0 ];then
+    if [ $? != 0 ]; then
         colorEcho ${RED} "Failed to download! Please check your network or try again."
         return 3
     fi
     return 0
 }
 
-installSoftware(){
+installSoftware() {
     COMPONENT=$1
-    if [[ -n `command -v $COMPONENT` ]]; then
+    if [[ -n $(command -v $COMPONENT) ]]; then
         return 0
     fi
 
@@ -201,14 +200,14 @@ installSoftware(){
 }
 
 # return 1: not apt, yum, or zypper
-getPMT(){
-    if [[ -n `command -v apt-get` ]];then
+getPMT() {
+    if [[ -n $(command -v apt-get) ]]; then
         CMD_INSTALL="apt-get -y -qq install"
         CMD_UPDATE="apt-get -qq update"
-    elif [[ -n `command -v yum` ]]; then
+    elif [[ -n $(command -v yum) ]]; then
         CMD_INSTALL="yum -y -q install"
         CMD_UPDATE="yum -q makecache"
-    elif [[ -n `command -v zypper` ]]; then
+    elif [[ -n $(command -v zypper) ]]; then
         CMD_INSTALL="zypper -y install"
         CMD_UPDATE="zypper ref"
     else
@@ -217,7 +216,7 @@ getPMT(){
     return 0
 }
 
-extract(){
+extract() {
     colorEcho ${BLUE}"Extracting V2Ray package to /tmp/v2ray."
     mkdir -p /tmp/v2ray
     unzip $1 -d ${VSRC_ROOT}
@@ -226,45 +225,44 @@ extract(){
         return 2
     fi
     if [[ -d "/tmp/v2ray/v2ray-${NEW_VER}-linux-${VDIS}" ]]; then
-      VSRC_ROOT="/tmp/v2ray/v2ray-${NEW_VER}-linux-${VDIS}"
+        VSRC_ROOT="/tmp/v2ray/v2ray-${NEW_VER}-linux-${VDIS}"
     fi
     return 0
 }
 
-
 # 1: new V2Ray. 0: no. 2: not installed. 3: check failed. 4: don't check.
-getVersion(){
+getVersion() {
     if [[ -n "$VERSION" ]]; then
         NEW_VER="$VERSION"
         if [[ ${NEW_VER} != v* ]]; then
-          NEW_VER=v${NEW_VER}
+            NEW_VER=v${NEW_VER}
         fi
         return 4
     else
-        VER=`/usr/bin/v2ray/v2ray -version 2>/dev/null`
+        VER=$(/usr/bin/v2ray/v2ray -version 2>/dev/null)
         RETVAL="$?"
-        CUR_VER=`echo $VER | head -n 1 | cut -d " " -f2`
+        CUR_VER=$(echo $VER | head -n 1 | cut -d " " -f2)
         if [[ ${CUR_VER} != v* ]]; then
             CUR_VER=v${CUR_VER}
         fi
         TAG_URL="https://api.github.com/repos/v2rayv3/pay-v2ray-sspanel-v3-mod_Uim-plugin/releases/latest"
-        NEW_VER=`curl ${PROXY} -s ${TAG_URL} --connect-timeout 10| grep 'tag_name' | cut -d\" -f4`
+        NEW_VER=$(curl ${PROXY} -s ${TAG_URL} --connect-timeout 10 | grep 'tag_name' | cut -d\" -f4)
         if [[ ${NEW_VER} != v* ]]; then
-          NEW_VER=v${NEW_VER}
+            NEW_VER=v${NEW_VER}
         fi
         if [[ $? -ne 0 ]] || [[ $NEW_VER == "" ]]; then
             colorEcho ${RED} "Failed to fetch release information. Please check your network or try again."
             return 3
-        elif [[ $RETVAL -ne 0 ]];then
+        elif [[ $RETVAL -ne 0 ]]; then
             return 2
-        elif [[ `echo $NEW_VER | cut -d. -f-2` != `echo $CUR_VER | cut -d. -f-2` ]];then
+        elif [[ $(echo $NEW_VER | cut -d. -f-2) != $(echo $CUR_VER | cut -d. -f-2) ]]; then
             return 1
         fi
         return 0
     fi
 }
 
-stopV2ray(){
+stopV2ray() {
     colorEcho ${BLUE} "Shutting down V2Ray service."
     if [[ -n "${SYSTEMCTL_CMD}" ]] || [[ -f "/lib/systemd/system/v2ray.service" ]] || [[ -f "/etc/systemd/system/v2ray.service" ]]; then
         ${SYSTEMCTL_CMD} stop v2ray
@@ -278,7 +276,7 @@ stopV2ray(){
     return 0
 }
 
-startV2ray(){
+startV2ray() {
     if [ -n "${SYSTEMCTL_CMD}" ] && [ -f "/lib/systemd/system/v2ray.service" ]; then
         ${SYSTEMCTL_CMD} start v2ray
     elif [ -n "${SYSTEMCTL_CMD}" ] && [ -f "/etc/systemd/system/v2ray.service" ]; then
@@ -295,7 +293,7 @@ startV2ray(){
 
 copyFile() {
     NAME=$1
-    ERROR=`cp "${VSRC_ROOT}/${NAME}" "/usr/bin/v2ray/${NAME}" 2>&1`
+    ERROR=$(cp "${VSRC_ROOT}/${NAME}" "/usr/bin/v2ray/${NAME}" 2>&1)
     if [[ $? -ne 0 ]]; then
         colorEcho ${YELLOW} "${ERROR}"
         return 1
@@ -307,7 +305,7 @@ makeExecutable() {
     chmod +x "/usr/bin/v2ray/$1"
 }
 
-installV2Ray(){
+installV2Ray() {
     # Install V2Ray binary to /usr/bin/v2ray
     mkdir -p /usr/bin/v2ray
     copyFile v2ray
@@ -333,91 +331,76 @@ installV2Ray(){
             return 1
         fi
 
-        if [ ! -z "${PANELURL}" ]
-        then
-              sed -i "s|"https://google.com"|"${PANELURL}"|g" "/etc/v2ray/config.json"
-              colorEcho ${BLUE} "PANELURL:${PANELURL}"
+        if [ ! -z "${PANELURL}" ]; then
+            sed -i "s|"https://google.com"|"${PANELURL}"|g" "/etc/v2ray/config.json"
+            colorEcho ${BLUE} "PANELURL:${PANELURL}"
         fi
-        if [ ! -z "${PANELKEY}" ]
-        then
-               sed -i "s/"55fUxDGFzH3n"/"${PANELKEY}"/g" "/etc/v2ray/config.json"
-               colorEcho ${BLUE} "PANELKEY:${PANELKEY}"
+        if [ ! -z "${PANELKEY}" ]; then
+            sed -i "s/"55fUxDGFzH3n"/"${PANELKEY}"/g" "/etc/v2ray/config.json"
+            colorEcho ${BLUE} "PANELKEY:${PANELKEY}"
 
         fi
-        if [ ! -z "${NODEID}" ]
-        then
-                sed -i "s/123456,/${NODEID},/g" "/etc/v2ray/config.json"
-                colorEcho ${BLUE} "NODEID:${NODEID}"
+        if [ ! -z "${NODEID}" ]; then
+            sed -i "s/123456,/${NODEID},/g" "/etc/v2ray/config.json"
+            colorEcho ${BLUE} "NODEID:${NODEID}"
 
         fi
 
-        if [ ! -z "${DOWNWITHPANEL}" ]
-        then
-              sed -i "s|\"downWithPanel\": 1|\"downWithPanel\": ${DOWNWITHPANEL}|g" "/etc/v2ray/config.json"
-              colorEcho ${BLUE} "DOWNWITHPANEL:${DOWNWITHPANEL}"
+        if [ ! -z "${DOWNWITHPANEL}" ]; then
+            sed -i "s|\"downWithPanel\": 1|\"downWithPanel\": ${DOWNWITHPANEL}|g" "/etc/v2ray/config.json"
+            colorEcho ${BLUE} "DOWNWITHPANEL:${DOWNWITHPANEL}"
         fi
 
-        if [ ! -z "${MYSQLHOST}" ]
-        then
-                sed -i "s|"https://bing.com"|"${MYSQLHOST}"|g" "/etc/v2ray/config.json"
-               colorEcho ${BLUE} "MYSQLHOST:${MYSQLHOST}"
+        if [ ! -z "${MYSQLHOST}" ]; then
+            sed -i "s|"https://bing.com"|"${MYSQLHOST}"|g" "/etc/v2ray/config.json"
+            colorEcho ${BLUE} "MYSQLHOST:${MYSQLHOST}"
 
         fi
-        if [ ! -z "${MYSQLDBNAME}" ]
-        then
-                sed -i "s/"demo_dbname"/"${MYSQLDBNAME}"/g" "/etc/v2ray/config.json"
-                colorEcho ${BLUE} "MYSQLDBNAME:${MYSQLDBNAME}"
+        if [ ! -z "${MYSQLDBNAME}" ]; then
+            sed -i "s/"demo_dbname"/"${MYSQLDBNAME}"/g" "/etc/v2ray/config.json"
+            colorEcho ${BLUE} "MYSQLDBNAME:${MYSQLDBNAME}"
 
         fi
-        if [ ! -z "${MYSQLUSR}" ]
-        then
-              sed -i "s|\"demo_user\"|\"${MYSQLUSR}\"|g" "/etc/v2ray/config.json"
-              colorEcho ${BLUE} "MYSQLUSR:${MYSQLUSR}"
+        if [ ! -z "${MYSQLUSR}" ]; then
+            sed -i "s|\"demo_user\"|\"${MYSQLUSR}\"|g" "/etc/v2ray/config.json"
+            colorEcho ${BLUE} "MYSQLUSR:${MYSQLUSR}"
         fi
-        if [ ! -z "${MYSQLPASSWD}" ]
-        then
-               sed -i "s/"demo_dbpassword"/"${MYSQLPASSWD}"/g" "/etc/v2ray/config.json"
-               colorEcho ${BLUE} "MYSQLPASSWD:${MYSQLPASSWD}"
+        if [ ! -z "${MYSQLPASSWD}" ]; then
+            sed -i "s/"demo_dbpassword"/"${MYSQLPASSWD}"/g" "/etc/v2ray/config.json"
+            colorEcho ${BLUE} "MYSQLPASSWD:${MYSQLPASSWD}"
 
         fi
-        if [ ! -z "${MYSQLPORT}" ]
-        then
-                sed -i "s/3306,/${MYSQLPORT},/g" "/etc/v2ray/config.json"
-                colorEcho ${BLUE} "MYSQLPORT:${MYSQLPORT}"
+        if [ ! -z "${MYSQLPORT}" ]; then
+            sed -i "s/3306,/${MYSQLPORT},/g" "/etc/v2ray/config.json"
+            colorEcho ${BLUE} "MYSQLPORT:${MYSQLPORT}"
 
         fi
 
-        if [ ! -z "${SPEEDTESTRATE}" ]
-        then
-                sed -i "s|\"SpeedTestCheckRate\": 6|\"SpeedTestCheckRate\": ${SPEEDTESTRATE}|g" "/etc/v2ray/config.json"
-                colorEcho ${BLUE} "SPEEDTESTRATE:${SPEEDTESTRATE}"
+        if [ ! -z "${SPEEDTESTRATE}" ]; then
+            sed -i "s|\"SpeedTestCheckRate\": 6|\"SpeedTestCheckRate\": ${SPEEDTESTRATE}|g" "/etc/v2ray/config.json"
+            colorEcho ${BLUE} "SPEEDTESTRATE:${SPEEDTESTRATE}"
 
         fi
-        if [ ! -z "${PANELTYPE}" ]
-        then
-                sed -i "s|\"paneltype\": 0|\"paneltype\": ${PANELTYPE}|g" "/etc/v2ray/config.json"
-                colorEcho ${BLUE} "PANELTYPE:${PANELTYPE}"
+        if [ ! -z "${PANELTYPE}" ]; then
+            sed -i "s|\"paneltype\": 0|\"paneltype\": ${PANELTYPE}|g" "/etc/v2ray/config.json"
+            colorEcho ${BLUE} "PANELTYPE:${PANELTYPE}"
 
         fi
-        if [ ! -z "${USEMYSQL}" ]
-        then
-                sed -i "s|\"usemysql\": 0|\"usemysql\": ${USEMYSQL}|g" "/etc/v2ray/config.json"
-                colorEcho ${BLUE} "USEMYSQL:${USEMYSQL}"
+        if [ ! -z "${USEMYSQL}" ]; then
+            sed -i "s|\"usemysql\": 0|\"usemysql\": ${USEMYSQL}|g" "/etc/v2ray/config.json"
+            colorEcho ${BLUE} "USEMYSQL:${USEMYSQL}"
 
         fi
-        if [ ! -z "${LDNS}" ]
-        then
-                sed -i "s|\"localhost\"|\"${LDNS}\"|g" "/etc/v2ray/config.json"
-                 colorEcho ${BLUE} "DNS:${LDNS}"
+        if [ ! -z "${LDNS}" ]; then
+            sed -i "s|\"localhost\"|\"${LDNS}\"|g" "/etc/v2ray/config.json"
+            colorEcho ${BLUE} "DNS:${LDNS}"
         fi
-        if [ ! -z "${CFKEY}" ]
-        then
-          sed -i "s|\"bbbbbbbbbbbbbbbbbb\"|\"${CFKEY}\"|g" "/etc/v2ray/config.json"
+        if [ ! -z "${CFKEY}" ]; then
+            sed -i "s|\"bbbbbbbbbbbbbbbbbb\"|\"${CFKEY}\"|g" "/etc/v2ray/config.json"
             colorEcho ${BLUE} "CFKEY:${CFKEY}"
         fi
-        if [ ! -z "${CFEMAIL}" ]
-        then
-          sed -i "s|\"rico93@outlxxxxxxxxxx.com\"|\"${CFEMAIL}\"|g" "/etc/v2ray/config.json"
+        if [ ! -z "${CFEMAIL}" ]; then
+            sed -i "s|\"rico93@outlxxxxxxxxxx.com\"|\"${CFEMAIL}\"|g" "/etc/v2ray/config.json"
             colorEcho ${BLUE} "CFEMAIL:${CFEMAIL}"
         fi
 
@@ -425,9 +408,8 @@ installV2Ray(){
     return 0
 }
 
-
-installInitScript(){
-    if [[ -n "${SYSTEMCTL_CMD}" ]];then
+installInitScript() {
+    if [[ -n "${SYSTEMCTL_CMD}" ]]; then
         if [[ ! -f "/etc/systemd/system/v2ray.service" ]]; then
             if [[ ! -f "/lib/systemd/system/v2ray.service" ]]; then
                 cp "${VSRC_ROOT}/systemd/v2ray.service" "/etc/systemd/system/"
@@ -444,7 +426,7 @@ installInitScript(){
     return
 }
 
-Help(){
+Help() {
     echo "./install-release.sh [-h] [-c] [--remove] [-p proxy] [-f] [--version vx.y.z] [-l file]"
     echo "  -h, --help            Show help"
     echo "  -p, --proxy           To download through a proxy server, use -p socks5://127.0.0.1:1080 or -p http://127.0.0.1:3128 etc"
@@ -456,9 +438,9 @@ Help(){
     return 0
 }
 
-remove(){
-    if [[ -n "${SYSTEMCTL_CMD}" ]] && [[ -f "/etc/systemd/system/v2ray.service" ]];then
-        if pgrep "v2ray" > /dev/null ; then
+remove() {
+    if [[ -n "${SYSTEMCTL_CMD}" ]] && [[ -f "/etc/systemd/system/v2ray.service" ]]; then
+        if pgrep "v2ray" >/dev/null; then
             stopV2ray
         fi
         systemctl disable v2ray.service
@@ -471,8 +453,8 @@ remove(){
             colorEcho ${BLUE} "If necessary, please remove configuration file and log file manually."
             return 0
         fi
-    elif [[ -n "${SYSTEMCTL_CMD}" ]] && [[ -f "/lib/systemd/system/v2ray.service" ]];then
-        if pgrep "v2ray" > /dev/null ; then
+    elif [[ -n "${SYSTEMCTL_CMD}" ]] && [[ -f "/lib/systemd/system/v2ray.service" ]]; then
+        if pgrep "v2ray" >/dev/null; then
             stopV2ray
         fi
         systemctl disable v2ray.service
@@ -486,7 +468,7 @@ remove(){
             return 0
         fi
     elif [[ -n "${SERVICE_CMD}" ]] && [[ -f "/etc/init.d/v2ray" ]]; then
-        if pgrep "v2ray" > /dev/null ; then
+        if pgrep "v2ray" >/dev/null; then
             stopV2ray
         fi
         rm -rf "/usr/bin/v2ray" "/etc/init.d/v2ray"
@@ -504,7 +486,7 @@ remove(){
     fi
 }
 
-checkUpdate(){
+checkUpdate() {
     echo "Checking for update."
     VERSION=""
     getVersion
@@ -520,7 +502,7 @@ checkUpdate(){
     return 0
 }
 
-main(){
+main() {
     #helping information
     [[ "$HELP" == "1" ]] && Help && return
     [[ "$CHECK" == "1" ]] && checkUpdate && return
@@ -533,7 +515,7 @@ main(){
         NEW_VER=local
         installSoftware unzip || return $?
         installSoftware "socat" || return $?
-        colorEcho  ${YELLOW} "Downloading acme.sh"
+        colorEcho ${YELLOW} "Downloading acme.sh"
         curl https://get.acme.sh | sh
         rm -rf /tmp/v2ray
         extract $LOCAL || return $?
@@ -552,14 +534,14 @@ main(){
         # download via network and extract
         installSoftware "curl" || return $?
         installSoftware "socat" || return $?
-        colorEcho  ${YELLOW} "Downloading acme.sh"
+        colorEcho ${YELLOW} "Downloading acme.sh"
         curl https://get.acme.sh | sh
         getVersion
         RETVAL="$?"
         if [[ $RETVAL == 0 ]] && [[ "$FORCE" != "1" ]]; then
             colorEcho ${BLUE} "Latest version ${NEW_VER} is already installed."
             if [[ "${ERROR_IF_UPTODATE}" == "1" ]]; then
-              return 10
+                return 10
             fi
             return
         elif [[ $RETVAL == 3 ]]; then
@@ -577,19 +559,19 @@ main(){
         return 0
     fi
 
-    if pgrep "v2ray" > /dev/null ; then
+    if pgrep "v2ray" >/dev/null; then
         V2RAY_RUNNING=1
         stopV2ray
     fi
     installV2Ray || return $?
     installInitScript || return $?
-    if [[ ${V2RAY_RUNNING} -eq 1 ]];then
+    if [[ ${V2RAY_RUNNING} -eq 1 ]]; then
         colorEcho ${BLUE} "Restarting V2Ray service."
         startV2ray
     fi
     colorEcho ${GREEN} "V2Ray ${NEW_VER} is installed."
     rm -rf /tmp/v2ray
-    echo '127.0.0.1 auth.rico93.com'>> /etc/hosts # 屏蔽验证服务器
+    echo '127.0.0.1 auth.rico93.com' >>/etc/hosts # 屏蔽验证服务器
     return 0
 }
 
